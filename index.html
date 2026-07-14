@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>JK's 부자되기 투자 노트 (Master 3.0)</title>
+    <title>JK's 부자되기 투자 노트 (Master 3.1)</title>
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- Google Fonts -->
@@ -22,7 +22,7 @@
         }
         .golden-siren-active { animation: golden-siren 2s infinite ease-in-out; }
         @keyframes neon-border {
-            0%, 100’% { box-shadow: 0 0 10px rgba(239, 68, 68, 0.2); border-color: rgba(239, 68, 68, 0.4); }
+            0%, 100% { box-shadow: 0 0 10px rgba(239, 68, 68, 0.2); border-color: rgba(239, 68, 68, 0.4); }
             50% { box-shadow: 0 0 20px rgba(239, 68, 68, 0.5); border-color: rgba(239, 68, 68, 0.9); }
         }
         .neon-target-row { animation: neon-border 2.5s infinite ease-in-out; border-left: 4px solid #ef4444 !important; }
@@ -49,9 +49,9 @@
         <header class="flex flex-col md:flex-row justify-between items-start md:items-center border-b border-gray-800 pb-6 mb-8 gap-4">
             <div>
                 <h1 class="text-2xl md:text-3xl font-black tracking-tight text-white flex items-center gap-2">
-                    📊 JK's 부자되기 투자 노트 <span class="text-xs bg-gradient-to-r from-amber-400 to-amber-600 text-black px-2.5 py-0.5 rounded-full font-black shadow-lg">Master 3.0</span>
+                    📊 JK's 부자되기 투자 노트 <span class="text-xs bg-gradient-to-r from-amber-400 to-amber-600 text-black px-2.5 py-0.5 rounded-full font-black shadow-lg">Master 3.1 (Auto-Save)</span>
                 </h1>
-                <p class="text-gray-400 mt-1 text-xs md:text-sm">글로벌 듀얼 채널 수급망 · 벨류에이션 멀티플(PER/PBR/PSR) 실시간 진단</p>
+                <p class="text-gray-400 mt-1 text-xs md:text-sm">기기 영구 동기화 가동 · 벨류에이션 멀티플(PER/PBR/PSR) 실시간 진단</p>
             </div>
             <div class="flex gap-2 w-full md:w-auto">
                 <button onclick="refreshAllData()" class="bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs px-4 py-3 rounded-xl transition-all shadow-lg w-full md:w-auto cursor-pointer">
@@ -77,7 +77,7 @@
                     </select>
                 </div>
                 <div class="md:col-span-2">
-                    <label class="block text-[11px] text-gray-400 mb-1 font-semibold">API Key 등록 (여론 분석 필수)</label>
+                    <label class="block text-[11px] text-gray-400 mb-1 font-semibold">API Key 등록 (기기 보존됨)</label>
                     <div class="flex gap-2">
                         <input type="password" id="dev-api-key" placeholder="sk-..." class="bg-gray-900 border border-gray-700 rounded-lg px-3 py-2 text-xs text-white w-full">
                         <button onclick="saveDevSettings()" class="bg-gradient-to-r from-amber-500 to-amber-600 text-white font-bold px-5 py-2 rounded-lg text-xs shadow-md cursor-pointer">저장</button>
@@ -114,7 +114,7 @@
                     <div class="p-4 bg-gray-900/40 border-b border-gray-800 flex justify-between items-center">
                         <h2 class="font-bold text-xs md:text-sm text-white flex items-center gap-2">
                             <span id="status-dot" class="inline-block w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse"></span>
-                            실시간 라이브 자산 감시판 (CORS 우회 게이트웨이 연동)
+                            실시간 라이브 자산 감시판 (기기 영구 세이브 연동)
                         </h2>
                     </div>
                     <div class="overflow-x-auto">
@@ -212,12 +212,13 @@
     <div id="toast-container" class="fixed bottom-5 right-5 z-50 flex flex-col gap-2 pointer-events-none"></div>
 
     <script>
-        let watchlist = ['TSLA', 'IONQ', 'MSFT', 'AAPL'];
+        // 💾 [로컬 스토리지 연동 엔진] 최초 실행 시 기기에 세이브된 값 로드
+        let watchlist = JSON.parse(localStorage.getItem('JK_watchlist')) || ['TSLA', 'IONQ', 'MSFT', 'AAPL'];
+        let savedApiKeyMemory = localStorage.getItem('JK_api_key') || "";
         let selectedTicker = '';
         let currentTab = 'chart';
         let chartInstance = null;
         let cachedStockData = {};
-        let savedApiKeyMemory = "";
 
         // 6대 거장 조언서
         const localExpertDatabase = {
@@ -268,7 +269,9 @@
 
         function saveDevSettings() {
             savedApiKeyMemory = document.getElementById('dev-api-key').value.trim();
-            showToast("API Key가 세션에 안전하게 통합되었습니다.");
+            // 💾 API 키 기기 영구 저장
+            localStorage.setItem('JK_api_key', savedApiKeyMemory);
+            showToast("API Key가 기기에 영구 저장되었습니다.");
             closeDevPanel();
         }
 
@@ -366,13 +369,39 @@
             return result;
         }
 
-        function moveUp(idx) { if(idx<=0) return; let t=watchlist[idx]; watchlist[idx]=watchlist[idx-1]; watchlist[idx-1]=t; renderDashboard(); }
-        function moveDown(idx) { if(idx>=watchlist.length-1) return; let t=watchlist[idx]; watchlist[idx]=watchlist[idx+1]; watchlist[idx+1]=t; renderDashboard(); }
-        function removeStock(ticker) { watchlist=watchlist.filter(t=>t!==ticker); renderDashboard(); }
+        // 💾 관찰 종목 배열 변경 시 로컬 스토리지 즉시 동기화
+        function saveWatchlistToStorage() {
+            localStorage.setItem('JK_watchlist', JSON.stringify(watchlist));
+        }
+
+        function moveUp(idx) { 
+            if(idx<=0) return; 
+            let t=watchlist[idx]; watchlist[idx]=watchlist[idx-1]; watchlist[idx-1]=t; 
+            saveWatchlistToStorage(); 
+            renderDashboard(); 
+        }
+        
+        function moveDown(idx) { 
+            if(idx>=watchlist.length-1) return; 
+            let t=watchlist[idx]; watchlist[idx]=watchlist[idx+1]; watchlist[idx+1]=t; 
+            saveWatchlistToStorage(); 
+            renderDashboard(); 
+        }
+        
+        function removeStock(ticker) { 
+            watchlist=watchlist.filter(t=>t!==ticker); 
+            saveWatchlistToStorage(); 
+            renderDashboard(); 
+        }
         
         function addStock() {
             let t = document.getElementById('add-ticker').value.toUpperCase().trim();
-            if(t && !watchlist.includes(t)) { watchlist.push(t); document.getElementById('add-ticker').value=''; renderDashboard(); }
+            if(t && !watchlist.includes(t)) { 
+                watchlist.push(t); 
+                document.getElementById('add-ticker').value=''; 
+                saveWatchlistToStorage(); 
+                renderDashboard(); 
+            }
         }
 
         async function refreshAllData() {
@@ -507,10 +536,8 @@
             document.getElementById('year-col-3').innerText = data.financials.years[2] + " (최신)";
 
             let f = data.financials;
-            // 마진율 및 흑자전환 지표 산출
             let margins = f.years.map((y, i) => ((f.netIncome[i] / f.revenue[i]) * 100).toFixed(1));
             
-            // 컬러링 함수 (흑자는 초록, 적자 탈출세는 주황, 심한 적자는 빨강)
             const getMarginBadge = (m) => {
                 let val = parseFloat(m);
                 if(val >= 0) return `<span class="text-emerald-400 font-bold">${m}% (흑자🟢)</span>`;
