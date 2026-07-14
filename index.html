@@ -146,7 +146,7 @@
                 <div>
                     <h3 class="text-xs md:text-sm font-semibold text-white mb-3">🛠️ 관찰 종목 관리</h3>
                     <div class="flex gap-2 mb-3">
-                        <input type="text" id="add-ticker" placeholder="예: TSLA, IONQ, AAPL" class="bg-gray-900 border border-gray-700 rounded-lg px-3 py-2 text-xs text-white focus:outline-none focus:border-red-500 transition-colors w-full uppercase">
+                        <input type="text" id="add-ticker" placeholder="예: TSLA, IONQ, AAPL, MSFT" class="bg-gray-900 border border-gray-700 rounded-lg px-3 py-2 text-xs text-white focus:outline-none focus:border-red-500 transition-colors w-full uppercase">
                         <button onclick="addStock()" class="bg-red-600 hover:bg-red-700 text-white font-bold px-3 py-2 rounded-lg text-xs transition-colors cursor-pointer shrink-0">➕ 추가</button>
                     </div>
                     <div id="stock-tags" class="flex flex-wrap gap-1.5 mt-2"></div>
@@ -372,7 +372,6 @@
             closeDevPanel();
         }
 
-        
         // 🌐 글로벌 공용 CORS 우회용 프록시 게이트웨이 파이프라인
         async function fetchWithProxy(targetUrl) {
             const proxies = [
